@@ -1,0 +1,44 @@
+# Configuración del bot de búsqueda de departamentos.
+# Los secretos (token de Telegram, chat id) NO van acá: van por variables
+# de entorno / GitHub Secrets. Ver README.
+
+filtros:
+  precio_max: 600000          # ARS
+  precio_min: 0               # ARS
+  moneda: "ARS"               # solo se consideran avisos en esta moneda
+  ambientes_min: 2
+  dormitorios_min: 1
+  zonas:
+    - "Nueva Córdoba"
+    - "Güemes"
+    - "Centro"
+  m2_min: 40
+  excluir_palabras:
+    - "temporario"
+    - "temporal"
+    - "estudiantes"
+  # Si un aviso no expone un dato (ej: m2 o dormitorios no aparecen en el
+  # listado), strict_unknown=false lo deja pasar igual. Ponelo en true para
+  # ser estricto y descartar todo lo que no se pueda verificar.
+  strict_unknown: false
+
+# Fuentes habilitadas. Empezamos solo con La Voz (la más estable).
+# Las demás se van sumando por fase (ver README).
+fuentes:
+  lavoz:
+    enabled: true
+    # Páginas de listado a recorrer (alquiler de departamentos en Córdoba).
+    urls:
+      - "https://clasificados.lavoz.com.ar/inmuebles/alquileres-departamentos"
+    max_paginas: 2            # cuántas páginas de resultados recorrer
+  argenprop:
+    enabled: false
+  zonaprop:
+    enabled: false
+  facebook:
+    enabled: false
+
+# Comportamiento del reporte
+reporte:
+  # Si no hay nuevos, igual manda mensaje y vuelve a listar los vigentes.
+  enviar_si_no_hay_nuevos: true
