@@ -51,13 +51,20 @@ def main() -> None:
 
     # 3) Deduplicar contra lo ya notificado
     seen = store.load_seen()
+    primera_corrida = not seen
     nuevos = [l for l in vigentes if l.id not in seen]
-    print(f"[main] {len(nuevos)} son nuevos")
+    print(f"[main] {len(nuevos)} son nuevos (primera_corrida={primera_corrida})")
 
     # 4) Notificar
+    rep = conf.get("reporte", {})
+    max_listar = int(rep.get("max_listar", 20))
     fecha = datetime.now(TZ_AR).strftime("%d/%m %H:%M")
-    if nuevos or conf.get("reporte", {}).get("enviar_si_no_hay_nuevos", True):
-        messages = notifier.build_messages(nuevos, vigentes, fecha)
+    if primera_corrida:
+        # Evitamos inundar: resumimos y sembramos el estado.
+        messages = notifier.build_first_run_messages(vigentes, fecha, max_listar)
+        notifier.send(messages)
+    elif nuevos or rep.get("enviar_si_no_hay_nuevos", True):
+        messages = notifier.build_messages(nuevos, vigentes, fecha, max_listar)
         notifier.send(messages)
     else:
         print("[main] sin nuevos y reporte deshabilitado, no se envía nada")

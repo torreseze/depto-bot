@@ -44,20 +44,43 @@ def _chunks(header: str, items: list[str]) -> list[str]:
     return msgs
 
 
-def build_messages(nuevos: list[Listing], vigentes: list[Listing], fecha: str) -> list[str]:
+def _listar(header: str, listings: list[Listing], max_listar: int) -> list[str]:
+    mostrados = listings[:max_listar]
+    items = [_fmt_listing(l, i + 1) for i, l in enumerate(mostrados)]
+    if len(listings) > max_listar:
+        items.append(f"… y {len(listings) - max_listar} más.")
+    return _chunks(header, items)
+
+
+def build_first_run_messages(vigentes: list[Listing], fecha: str,
+                             max_listar: int = 20) -> list[str]:
+    """Primera corrida: no inundamos; resumimos y mostramos algunos ejemplos."""
+    if not vigentes:
+        return [f"✅ <b>Bot configurado</b> — {fecha}\n"
+                f"Por ahora no hay alquileres que matcheen tus filtros. "
+                f"Te aviso apenas aparezca alguno."]
+    header = (
+        f"✅ <b>Bot configurado</b> — {fecha}\n"
+        f"Estoy vigilando <b>{len(vigentes)}</b> alquileres que matchean tus filtros. "
+        f"De ahora en más te aviso solo cuando aparezca uno nuevo.\n"
+        f"Algunos ejemplos de los que ya hay:"
+    )
+    return _listar(header, vigentes, max_listar)
+
+
+def build_messages(nuevos: list[Listing], vigentes: list[Listing], fecha: str,
+                   max_listar: int = 20) -> list[str]:
     if nuevos:
         header = f"🏠 <b>{len(nuevos)} departamento(s) nuevo(s)</b> — {fecha}"
-        items = [_fmt_listing(l, i + 1) for i, l in enumerate(nuevos)]
-        return _chunks(header, items)
+        return _listar(header, nuevos, max_listar)
 
-    # Sin novedades: avisamos igual y reimprimimos los vigentes.
+    # Sin novedades: avisamos igual y reimprimimos los vigentes (acotados).
     if vigentes:
         header = (
             f"🙃 No encontramos ningún departamento nuevo — {fecha}\n"
             f"Estos son los {len(vigentes)} que matchean tus filtros ahora:"
         )
-        items = [_fmt_listing(l, i + 1) for i, l in enumerate(vigentes)]
-        return _chunks(header, items)
+        return _listar(header, vigentes, max_listar)
 
     return [f"🙃 No encontramos ningún departamento nuevo — {fecha}\n"
             f"Tampoco hay ninguno que matchee tus filtros por ahora."]

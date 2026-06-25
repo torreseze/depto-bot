@@ -4,6 +4,7 @@
 
 filtros:
   precio_max: 600000          # ARS
+  precio_tolerancia: 50000    # acepta hasta precio_max + esto (deptos al límite)
   precio_min: 0               # ARS
   moneda: "ARS"               # solo se consideran avisos en esta moneda
   ambientes_min: 2
@@ -27,10 +28,12 @@ filtros:
 fuentes:
   lavoz:
     enabled: true
-    # Páginas de listado a recorrer (alquiler de departamentos en Córdoba).
-    urls:
-      - "https://clasificados.lavoz.com.ar/inmuebles/alquileres-departamentos"
-    max_paginas: 2            # cuántas páginas de resultados recorrer
+    # Barrios a buscar (ids de location de La Voz):
+    #   Nueva Córdoba=5034 · Centro=4910 · Güemes=4958
+    # (más barrios en scrapers/lavoz.py -> BARRIOS, o agregalos acá)
+    location_ids: [5034, 4910, 4958]
+    max_paginas: 0            # 0 = todas las páginas de tus zonas (recomendado)
+    hard_cap_paginas: 80      # tope de seguridad
   argenprop:
     enabled: false
   zonaprop:
@@ -42,3 +45,5 @@ fuentes:
 reporte:
   # Si no hay nuevos, igual manda mensaje y vuelve a listar los vigentes.
   enviar_si_no_hay_nuevos: true
+  # Tope de avisos a listar por reporte (si hay más, muestra "...y N más").
+  max_listar: 20

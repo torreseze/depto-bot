@@ -19,12 +19,18 @@ def _norm(s: str) -> str:
 
 
 def parse_dormitorios(text: str):
-    m = re.search(r"(\d+)\s*(dormitorio|dorm\b)", _norm(text))
+    t = _norm(text)
+    if re.search(r"mono\s*-?\s*ambiente", t):
+        return 0  # un monoambiente no tiene dormitorio separado
+    m = re.search(r"(\d+)\s*(dormitorio|dorm\b)", t)
     return int(m.group(1)) if m else None
 
 
 def parse_ambientes(text: str):
-    m = re.search(r"(\d+)\s*(ambiente|amb\b)", _norm(text))
+    t = _norm(text)
+    if re.search(r"mono\s*-?\s*ambiente", t):
+        return 1
+    m = re.search(r"(\d+)\s*(ambiente|amb\b)", t)
     return int(m.group(1)) if m else None
 
 
@@ -39,9 +45,13 @@ def parse_m2(text: str):
         return None
 
 
+def _blob(listing: Listing) -> str:
+    return f"{listing.title} {listing.raw_text} {listing.zona or ''}"
+
+
 def enrich(listing: Listing) -> Listing:
     """Completa campos inferidos desde el texto si faltan."""
-    blob = f"{listing.title} {listing.raw_text}"
+    blob = _blob(listing)
     if listing.dormitorios is None:
         listing.dormitorios = parse_dormitorios(blob)
     if listing.ambientes is None:
@@ -54,7 +64,7 @@ def enrich(listing: Listing) -> Listing:
 def _matches(listing: Listing, f: dict) -> tuple[bool, str]:
     """Devuelve (pasa, motivo_de_descarte)."""
     strict = f.get("strict_unknown", False)
-    blob = _norm(f"{listing.title} {listing.raw_text}")
+    blob = _norm(_blob(listing))
 
     # --- palabras excluidas ---
     for w in f.get("excluir_palabras", []):
@@ -69,8 +79,10 @@ def _matches(listing: Listing, f: dict) -> tuple[bool, str]:
         if strict:
             return False, "sin precio"
     else:
-        if listing.price > f.get("precio_max", float("inf")):
-            return False, f"precio {listing.price:.0f} > max"
+        # tolerancia: aceptamos un poco por encima del máximo (deptos al límite)
+        tope = f.get("precio_max", float("inf")) + f.get("precio_tolerancia", 0)
+        if listing.price > tope:
+            return False, f"precio {listing.price:.0f} > max+tol"
         if listing.price < f.get("precio_min", 0):
             return False, f"precio {listing.price:.0f} < min"
 
