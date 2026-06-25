@@ -107,6 +107,11 @@ def _matches(listing: Listing, f: dict) -> tuple[bool, str]:
     elif dorm_min is not None and listing.dormitorios is None and strict:
         return False, "dormitorios desconocidos"
 
+    dorm_max = f.get("dormitorios_max")
+    if dorm_max is not None and listing.dormitorios is not None:
+        if listing.dormitorios > dorm_max:
+            return False, f"dormitorios {listing.dormitorios} > {dorm_max}"
+
     # --- m2 ---
     m2_min = f.get("m2_min")
     if m2_min is not None and listing.m2 is not None:

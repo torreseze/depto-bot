@@ -71,6 +71,11 @@ class LaVozScraper(BaseScraper):
         loc_ids = self.conf.get("location_ids") or list(BARRIOS.values())
         filters = BASE_FILTERS + "".join(f" tid_location_should:{i}" for i in loc_ids)
 
+        # Filtro de dormitorios en el server (valores: "1 Dormitorio",
+        # "2 Dormitorios", "3 Dormitorios", "Monoambiente", "4 Dormitorios o más")
+        for d in self.conf.get("cantidad_dormitorios") or []:
+            filters += f' ss_cantidad_dormitorios:"{d}"'
+
         max_pag = int(self.conf.get("max_paginas", 0))      # 0 = todas
         hard_cap = int(self.conf.get("hard_cap_paginas", 80))
 
