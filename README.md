@@ -23,11 +23,16 @@ GitHub Actions (cron, cada hora 6–22h AR)
 
 | Fuente | Estado | Nota |
 |---|---|---|
-| La Voz clasificados | ✅ implementada | navegador real (Playwright) |
+| La Voz clasificados | ✅ implementada | API interna vía `curl_cffi` (imita TLS de Chrome) |
 | Argenprop | ⏳ pendiente | fase 2 |
 | Zonaprop | ⏳ pendiente | Cloudflare, difícil |
 | MercadoLibre | ❌ descartada | la API ahora exige OAuth |
 | Facebook Marketplace | ⏳ opcional | requiere login, frágil, viola ToS |
+
+> **Cómo se scrapea La Voz:** su WAF bloquea Playwright y peticiones HTTP comunes
+> (403 "Acceso denegado"). Usamos `curl_cffi` con `impersonate="chrome"`, que
+> replica el fingerprint TLS de Chrome, y consumimos su API interna
+> `/api/search` (subcategoría departamentos + operación alquiler + barrios).
 
 ## Configuración
 
@@ -62,20 +67,21 @@ Pestaña **Actions → depto-bot → Run workflow** (dispara una corrida manual)
 ## Probar local (opcional)
 
 ```bash
-pip install -r requirements.txt
-python -m playwright install chromium
-export TELEGRAM_BOT_TOKEN=...   # opcional: sin esto imprime por consola
-export TELEGRAM_CHAT_ID=...
-python main.py
+./run_local.sh                 # crea el venv la 1ª vez y corre el bot
+# Sin TELEGRAM_BOT_TOKEN/CHAT_ID, imprime el reporte por consola.
 ```
 
 ## Notas / pendientes
 
 - El cron de GitHub no es exacto al minuto (puede demorarse en horas pico). Para
   "cada hora" no es problema.
-- Los avisos de La Voz a veces no muestran m2/dormitorios en el listado: con
-  `strict_unknown: false` (default) esos pasan igual. Para filtrar fino habría
-  que visitar la página de detalle de cada aviso (mejora de fase 2).
-- La paginación de La Voz usa `?pagina=N` (a confirmar en vivo; ajustar en
-  `scrapers/lavoz.py` si hiciera falta).
+- **Riesgo a validar en CI:** el WAF de La Voz podría bloquear la IP de datacenter
+  de GitHub Actions aunque `curl_cffi` pase el fingerprint TLS. Se confirma con la
+  primera corrida manual (Actions → Run workflow). Si diera 403, la solución es
+  usar un proxy residencial.
+- Filtro **equilibrado**: excluye monoambientes y exige los requisitos que el
+  aviso informa; si no informa m²/dormitorios, lo deja pasar (`strict_unknown:
+  false`). Para filtrar fino habría que visitar el detalle de cada aviso (fase 2).
+- La primera corrida no inunda: resume el inventario actual, manda algunos
+  ejemplos y "marca como vistos" los avisos; desde ahí solo notifica los nuevos.
 ```
