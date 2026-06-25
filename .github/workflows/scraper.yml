@@ -44,5 +44,15 @@ jobs:
             echo "Sin cambios en el estado."
           else
             git commit -m "chore: actualizar estado de avisos vistos [skip ci]"
-            git push
+            # La rama puede haberse movido mientras corría: rebase + reintento.
+            for i in 1 2 3 4 5; do
+              if git pull --rebase --autostash origin main && git push; then
+                echo "Estado guardado."
+                exit 0
+              fi
+              echo "push rechazado, reintento $i..."
+              sleep 5
+            done
+            echo "No se pudo guardar el estado tras varios intentos." >&2
+            exit 1
           fi

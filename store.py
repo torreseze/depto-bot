@@ -23,7 +23,13 @@ def load_seen() -> set[str]:
 
 def save_seen(seen: set[str]) -> None:
     os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
-    # Mantenemos solo los últimos MAX_SEEN (orden no garantizado, es best-effort).
-    trimmed = list(seen)[-MAX_SEEN:]
+    # Orden estable (numérico cuando se puede) para que el diff de git sea mínimo
+    # y no haya choques al commitear el estado en cada corrida.
+    def _key(x: str):
+        n = x.rsplit("-", 1)[-1]
+        return (0, int(n)) if n.isdigit() else (1, x)
+
+    ordenado = sorted(seen, key=_key)
+    trimmed = ordenado[-MAX_SEEN:]
     with open(STATE_PATH, "w", encoding="utf-8") as fh:
         json.dump({"seen": trimmed}, fh, ensure_ascii=False, indent=2)
