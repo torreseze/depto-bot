@@ -88,8 +88,10 @@ def build_messages(nuevos: list[Listing], vigentes: list[Listing], fecha: str,
 
 def send(messages: list[str]) -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
+    chat_ids_raw = os.environ.get("TELEGRAM_CHAT_ID", "")
+    # Permite varios destinatarios separados por coma: "123,456"
+    chat_ids = [c.strip() for c in chat_ids_raw.split(",") if c.strip()]
+    if not token or not chat_ids:
         print("[notifier] faltan TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID. "
               "Mostrando por consola:\n")
         for m in messages:
@@ -98,12 +100,14 @@ def send(messages: list[str]) -> None:
 
     api = f"https://api.telegram.org/bot{token}/sendMessage"
     with httpx.Client(timeout=30) as client:
-        for m in messages:
-            resp = client.post(api, json={
-                "chat_id": chat_id,
-                "text": m,
-                "parse_mode": "HTML",
-                "disable_web_page_preview": True,
-            })
-            if resp.status_code != 200:
-                print(f"[notifier] error Telegram {resp.status_code}: {resp.text}")
+        for chat_id in chat_ids:
+            for m in messages:
+                resp = client.post(api, json={
+                    "chat_id": chat_id,
+                    "text": m,
+                    "parse_mode": "HTML",
+                    "disable_web_page_preview": True,
+                })
+                if resp.status_code != 200:
+                    print(f"[notifier] error Telegram (chat {chat_id}) "
+                          f"{resp.status_code}: {resp.text}")

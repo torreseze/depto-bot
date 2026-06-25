@@ -59,7 +59,8 @@ gh repo create depto-bot --public --source=. --push
 ### 3. Cargar los secretos
 En el repo: **Settings → Secrets and variables → Actions → New secret**:
 - `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_CHAT_ID`
+- `TELEGRAM_CHAT_ID` — uno o varios chat ids separados por coma, ej:
+  `627176341,987654321` (le manda a todos)
 
 ### 4. Probar
 Pestaña **Actions → depto-bot → Run workflow** (dispara una corrida manual).
