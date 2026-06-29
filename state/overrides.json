@@ -1,6 +1,6 @@
 {
   "filtros": {
-    "precio_max": 650000,
+    "precio_max": 600000,
     "precio_tolerancia": 50000,
     "precio_min": 0,
     "moneda": "ARS",
