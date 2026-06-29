@@ -47,7 +47,7 @@ fuentes:
 
 # Comportamiento del reporte
 reporte:
-  # Si no hay nuevos, igual manda mensaje y vuelve a listar los vigentes.
-  enviar_si_no_hay_nuevos: true
+  # Si no hay nuevos, NO manda nada (solo notifica cuando aparecen nuevos).
+  enviar_si_no_hay_nuevos: false
   # Tope de avisos a listar por reporte (si hay más, muestra "...y N más").
   max_listar: 20
