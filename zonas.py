@@ -13,6 +13,7 @@ ZONAS = {
     "Nueva Córdoba": {"lavoz": 5034, "argenprop": "nueva-cordoba"},
     "Centro":        {"lavoz": 4910, "argenprop": "centro"},
     "Güemes":        {"lavoz": 4958, "argenprop": None},
+    "General Paz":   {"lavoz": 4951, "argenprop": "general-paz"},
 }
 
 # Nombres disponibles para ofrecer en el wizard del bot.
