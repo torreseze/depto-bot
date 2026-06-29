@@ -19,6 +19,7 @@ import base64
 import json
 import os
 import re
+import threading
 import unicodedata
 
 import httpx
@@ -236,10 +237,17 @@ def health():
 
 @app.post(f"/webhook/{WEBHOOK_SECRET}")
 def webhook():
-    try:
-        handle(request.get_json(force=True, silent=True) or {})
-    except Exception as e:  # noqa: BLE001
-        print(f"[bot] error manejando update: {e}")
+    # Respondemos 200 al instante y procesamos en segundo plano, así Telegram
+    # no espera ni reintenta (evita los 502 y la latencia percibida).
+    update = request.get_json(force=True, silent=True) or {}
+
+    def _bg():
+        try:
+            handle(update)
+        except Exception as e:  # noqa: BLE001
+            print(f"[bot] error manejando update: {e}")
+
+    threading.Thread(target=_bg, daemon=True).start()
     return "ok", 200
 
 

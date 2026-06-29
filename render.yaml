@@ -6,7 +6,9 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements-bot.txt
-    startCommand: gunicorn bot_server:app
+    # 1 worker (sesiones del wizard en memoria compartida) + varios threads
+    # para atender mensajes concurrentes sin saturar (evita 502).
+    startCommand: gunicorn bot_server:app --workers 1 --threads 8 --timeout 60
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false          # lo cargás a mano (secreto)
