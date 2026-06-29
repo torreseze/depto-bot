@@ -1,0 +1,21 @@
+name: keepalive
+
+# Pinguea el bot en Render cada ~10 min para que no se duerma (free tier
+# duerme tras 15 min sin tráfico). Requiere el secret RENDER_URL con la URL
+# pública del servicio (ej: https://depto-bot.onrender.com).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render
+        run: |
+          if [ -n "${{ secrets.RENDER_URL }}" ]; then
+            curl -fsS --max-time 30 "${{ secrets.RENDER_URL }}" || echo "ping falló (puede estar despertando)"
+          else
+            echo "Falta el secret RENDER_URL"
+          fi

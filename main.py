@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
 
-import yaml
-
+import config_store
 import notifier
 import store
+import zonas
 from matcher import filter_listings
 from scrapers import SCRAPERS
 
@@ -17,15 +17,30 @@ from scrapers import SCRAPERS
 TZ_AR = timezone(timedelta(hours=-3))
 
 
-def load_config(path: str = "config.yaml") -> dict:
-    with open(path, encoding="utf-8") as fh:
-        return yaml.safe_load(fh)
-
-
 def main() -> None:
-    conf = load_config()
+    conf = config_store.load_config()
     filtros = conf.get("filtros", {})
     fuentes = conf.get("fuentes", {})
+
+    # Resolver las zonas elegidas (filtros.zonas) a los ids/slugs de cada fuente.
+    zonas_sel = filtros.get("zonas")
+    if fuentes.get("lavoz"):
+        ids = zonas.resolver(zonas_sel, "lavoz")
+        if ids:
+            fuentes["lavoz"]["location_ids"] = ids
+    if fuentes.get("argenprop"):
+        slugs = zonas.resolver(zonas_sel, "argenprop")
+        if slugs:
+            fuentes["argenprop"]["slugs"] = slugs
+
+    # Resolver dormitorios -> filtro server-side de La Voz.
+    dorm_labels = {0: "Monoambiente", 1: "1 Dormitorio", 2: "2 Dormitorios",
+                   3: "3 Dormitorios", 4: "4 Dormitorios o más"}
+    dorms = filtros.get("dormitorios")
+    if fuentes.get("lavoz") and dorms:
+        fuentes["lavoz"]["cantidad_dormitorios"] = [
+            dorm_labels[d] for d in dorms if d in dorm_labels
+        ]
 
     # 1) Scrapear todas las fuentes habilitadas
     todos: list = []

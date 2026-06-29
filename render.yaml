@@ -1,0 +1,20 @@
+# Blueprint de Render para el bot interactivo.
+# En Render: New + → Blueprint → conectás este repo → carga este archivo.
+services:
+  - type: web
+    name: depto-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-bot.txt
+    startCommand: gunicorn bot_server:app
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false          # lo cargás a mano (secreto)
+      - key: TELEGRAM_CHAT_ID
+        sync: false          # ids autorizados separados por coma
+      - key: WEBHOOK_SECRET
+        sync: false          # string secreto para la ruta del webhook
+      - key: GITHUB_TOKEN
+        sync: false          # PAT con permiso de escritura en el repo
+      - key: GITHUB_REPO
+        value: torreseze/depto-bot

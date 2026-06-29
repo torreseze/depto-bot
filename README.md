@@ -78,6 +78,26 @@ Pestaña **Actions → depto-bot → Run workflow** (dispara una corrida manual)
 # Sin TELEGRAM_BOT_TOKEN/CHAT_ID, imprime el reporte por consola.
 ```
 
+## Bot interactivo (Render)
+
+El bot ([bot_server.py](bot_server.py)) deja configurar la alarma por Telegram:
+`/configurar` (wizard), `/estado`, `/precio`, `/dormitorios`, `/zonas`. Escribe los
+filtros en `state/overrides.json` (vía GitHub API) y el scraper los toma en la
+próxima corrida. Corre en Render (free) con webhook; un cron de GitHub
+([keepalive.yml](.github/workflows/keepalive.yml)) lo pinguea para que no duerma.
+
+### Deploy en Render
+1. **PAT de GitHub:** crear un token *fine-grained* con permiso *Contents: Read and
+   write* sobre el repo. Será `GITHUB_TOKEN`.
+2. En Render: **New + → Blueprint →** conectar este repo (usa `render.yaml`).
+3. Cargar las env vars del servicio:
+   - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (ids separados por coma),
+   - `WEBHOOK_SECRET` (inventá un string), `GITHUB_TOKEN`, `GITHUB_REPO=torreseze/depto-bot`.
+4. Cuando Render te dé la URL (ej. `https://depto-bot.onrender.com`):
+   - Registrar el webhook de Telegram:
+     `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://depto-bot.onrender.com/webhook/<WEBHOOK_SECRET>`
+   - Agregar el secret `RENDER_URL` en GitHub (Actions) con esa URL, para el keepalive.
+
 ## Notas / pendientes
 
 - El cron de GitHub no es exacto al minuto (puede demorarse en horas pico). Para

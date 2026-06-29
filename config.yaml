@@ -8,8 +8,7 @@ filtros:
   precio_min: 0               # ARS
   moneda: "ARS"               # solo se consideran avisos en esta moneda
   ambientes_min: 2
-  dormitorios_min: 1
-  dormitorios_max: 1          # solo deptos de 1 dormitorio (excluye 2+)
+  dormitorios: [1]            # cantidades de dormitorios aceptadas (ej: [1] o [1, 2])
   zonas:
     - "Nueva Córdoba"
     - "Güemes"
@@ -29,19 +28,14 @@ filtros:
 fuentes:
   lavoz:
     enabled: true
-    # Barrios a buscar (ids de location de La Voz):
-    #   Nueva Córdoba=5034 · Centro=4910 · Güemes=4958
-    # (más barrios en scrapers/lavoz.py -> BARRIOS, o agregalos acá)
+    # location_ids y cantidad_dormitorios los deriva main.py de filtros.zonas
+    # y filtros.dormitorios (ver zonas.py). Estos son fallback por si faltaran.
     location_ids: [5034, 4910, 4958]
-    # Filtro de dormitorios en el server (vacío = todos). Valores válidos:
-    #   "1 Dormitorio" · "2 Dormitorios" · "3 Dormitorios" · "Monoambiente" · "4 Dormitorios o más"
-    cantidad_dormitorios: ["1 Dormitorio"]
     max_paginas: 0            # 0 = todas las páginas de tus zonas (recomendado)
     hard_cap_paginas: 80      # tope de seguridad
   argenprop:
     enabled: true
-    # Slugs de búsqueda (barrio solo). La zona real de cada aviso se saca del
-    # href, así que el matcher filtra por filtros.zonas igual.
+    # slugs los deriva main.py de filtros.zonas. Fallback acá.
     # Nota: Güemes-Córdoba no tiene slug propio en Argenprop (lo cubre La Voz).
     slugs: ["nueva-cordoba", "centro"]
     max_paginas: 0

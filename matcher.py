@@ -100,17 +100,13 @@ def _matches(listing: Listing, f: dict) -> tuple[bool, str]:
     elif amb_min is not None and listing.ambientes is None and strict:
         return False, "ambientes desconocidos"
 
-    dorm_min = f.get("dormitorios_min")
-    if dorm_min is not None and listing.dormitorios is not None:
-        if listing.dormitorios < dorm_min:
-            return False, f"dormitorios {listing.dormitorios} < {dorm_min}"
-    elif dorm_min is not None and listing.dormitorios is None and strict:
+    # dormitorios: lista de cantidades aceptadas, ej [1] o [1, 2]
+    dorms = f.get("dormitorios")
+    if dorms and listing.dormitorios is not None:
+        if listing.dormitorios not in dorms:
+            return False, f"dormitorios {listing.dormitorios} no en {dorms}"
+    elif dorms and listing.dormitorios is None and strict:
         return False, "dormitorios desconocidos"
-
-    dorm_max = f.get("dormitorios_max")
-    if dorm_max is not None and listing.dormitorios is not None:
-        if listing.dormitorios > dorm_max:
-            return False, f"dormitorios {listing.dormitorios} > {dorm_max}"
 
     # --- m2 ---
     m2_min = f.get("m2_min")
