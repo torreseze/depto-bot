@@ -24,10 +24,16 @@ GitHub Actions (cron, cada hora 6–22h AR)
 | Fuente | Estado | Nota |
 |---|---|---|
 | La Voz clasificados | ✅ implementada | API interna vía `curl_cffi` (imita TLS de Chrome) |
-| Argenprop | ⏳ pendiente | fase 2 |
+| Argenprop | ✅ implementada | HTML vía `curl_cffi`; datos estructurados en atributos |
 | Zonaprop | ⏳ pendiente | Cloudflare, difícil |
-| MercadoLibre | ❌ descartada | la API ahora exige OAuth |
+| MercadoLibre | ❌ descartada | DataDome bloquea el scraping; su API exige OAuth |
 | Facebook Marketplace | ⏳ opcional | requiere login, frágil, viola ToS |
+
+> **Argenprop:** se busca por barrio (`slugs` en config) y la zona real de cada
+> aviso se deriva del href (las búsquedas mezclan barrios destacados). Güemes no
+> tiene slug propio en Argenprop, pero La Voz ya cubre esa zona.
+> Al **agregar una fuente nueva**, sus avisos se "siembran" en silencio la primera
+> vez (no inunda); desde la corrida siguiente notifica solo los nuevos.
 
 > **Cómo se scrapea La Voz:** su WAF bloquea Playwright y peticiones HTTP comunes
 > (403 "Acceso denegado"). Usamos `curl_cffi` con `impersonate="chrome"`, que

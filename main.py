@@ -52,8 +52,19 @@ def main() -> None:
     # 3) Deduplicar contra lo ya notificado
     seen = store.load_seen()
     primera_corrida = not seen
-    nuevos = [l for l in vigentes if l.id not in seen]
-    print(f"[main] {len(nuevos)} son nuevos (primera_corrida={primera_corrida})")
+    # Fuentes que ya conocíamos (para no inundar cuando se agrega una nueva).
+    fuentes_conocidas = {sid.split("-", 1)[0] for sid in seen}
+    nuevos = [
+        l for l in vigentes
+        if l.id not in seen and l.source in fuentes_conocidas
+    ]
+    # Avisos de una fuente recién agregada: se siembran en silencio (no se notifican).
+    sembrados = [
+        l for l in vigentes
+        if l.id not in seen and l.source not in fuentes_conocidas
+    ]
+    print(f"[main] {len(nuevos)} nuevos, {len(sembrados)} sembrados en silencio "
+          f"(primera_corrida={primera_corrida})")
 
     # 4) Notificar
     rep = conf.get("reporte", {})

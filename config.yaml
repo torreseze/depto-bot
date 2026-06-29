@@ -39,7 +39,13 @@ fuentes:
     max_paginas: 0            # 0 = todas las páginas de tus zonas (recomendado)
     hard_cap_paginas: 80      # tope de seguridad
   argenprop:
-    enabled: false
+    enabled: true
+    # Slugs de búsqueda (barrio solo). La zona real de cada aviso se saca del
+    # href, así que el matcher filtra por filtros.zonas igual.
+    # Nota: Güemes-Córdoba no tiene slug propio en Argenprop (lo cubre La Voz).
+    slugs: ["nueva-cordoba", "centro"]
+    max_paginas: 0
+    hard_cap_paginas: 25
   zonaprop:
     enabled: false
   facebook:
