@@ -117,15 +117,18 @@ def _parse_dorms(text: str):
     return sorted({int(n) for n in nums}) if nums else None
 
 
-def _parse_zonas(text: str):
-    # match contra los nombres conocidos, sin distinguir acentos/mayúsculas
+def _match_zonas(text: str):
+    """Devuelve (reconocidas, desconocidas) comparando sin acentos/mayúsculas."""
     pedidos = [p.strip() for p in text.split(",") if p.strip()]
-    elegidas = []
+    elegidas, desconocidas = [], []
     for p in pedidos:
-        for nombre in zonas.NOMBRES:
-            if _norm(p) == _norm(nombre) and nombre not in elegidas:
-                elegidas.append(nombre)
-    return elegidas
+        m = next((n for n in zonas.NOMBRES if _norm(p) == _norm(n)), None)
+        if m:
+            if m not in elegidas:
+                elegidas.append(m)
+        else:
+            desconocidas.append(p)
+    return elegidas, desconocidas
 
 
 def _norm(s: str) -> str:
@@ -187,13 +190,17 @@ def handle(update: dict) -> None:
             CURRENT["dormitorios"] = d
             aplicar_y_guardar(chat_id, f"Dormitorios: {', '.join(map(str, d))}")
     elif cmd == "/zonas":
-        z = _parse_zonas(arg)
+        z, desc = _match_zonas(arg)
         if not z:
-            send(chat_id, "No reconocí esas zonas. Disponibles: "
-                          + ", ".join(zonas.NOMBRES))
+            send(chat_id, f"No reconocí: {', '.join(desc) or '(vacío)'}.\n"
+                          f"Disponibles: {', '.join(zonas.NOMBRES)}.\n"
+                          f"(Si querés otra zona, pedísela a Eze para agregarla.)")
         else:
             CURRENT["zonas"] = z
-            aplicar_y_guardar(chat_id, f"Zonas: {', '.join(z)}")
+            resumen = f"Zonas: {', '.join(z)}"
+            if desc:
+                resumen += f"\n⚠️ No reconocí (las ignoré): {', '.join(desc)}"
+            aplicar_y_guardar(chat_id, resumen)
     else:
         send(chat_id, "No entendí 🤔\n\n" + HELP)
 
@@ -219,11 +226,14 @@ def wizard_step(chat_id, text: str) -> None:
         send(chat_id, "3/3 — ¿Qué zonas? Disponibles: " + ", ".join(zonas.NOMBRES)
              + "\n(separadas por coma)")
     elif step == "zonas":
-        z = _parse_zonas(text)
+        z, desc = _match_zonas(text)
         if not z:
-            send(chat_id, "No reconocí esas zonas. Probá con: " + ", ".join(zonas.NOMBRES))
+            send(chat_id, f"No reconocí: {', '.join(desc) or '(vacío)'}.\n"
+                          f"Probá con: {', '.join(zonas.NOMBRES)}")
             return
         data["zonas"] = z
+        if desc:
+            send(chat_id, f"⚠️ No reconocí (las ignoré): {', '.join(desc)}")
         CURRENT.update(data)
         SESSIONS.pop(chat_id, None)
         aplicar_y_guardar(chat_id, "¡Alarma configurada!")
