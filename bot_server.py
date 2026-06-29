@@ -53,17 +53,23 @@ HELP = (
 )
 
 
+# Cliente HTTP persistente: reusa la conexión (evita el handshake TLS por mensaje).
+_http = httpx.Client(timeout=20, headers={"Connection": "keep-alive"})
+
+
 # ----------------------------- Telegram I/O -----------------------------
 def send(chat_id, text: str) -> None:
     if not TG_TOKEN:
         print(f"[bot] (sin token) -> {chat_id}: {text}")
         return
-    httpx.post(
-        f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
-        json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
-              "disable_web_page_preview": True},
-        timeout=20,
-    )
+    try:
+        _http.post(
+            f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
+                  "disable_web_page_preview": True},
+        )
+    except Exception as e:  # noqa: BLE001
+        print(f"[bot] error enviando a {chat_id}: {e}")
 
 
 # --------------------------- Persistencia (repo) ------------------------
@@ -77,19 +83,18 @@ def guardar_filtros() -> bool:
     headers = {"Authorization": f"Bearer {GH_TOKEN}",
                "Accept": "application/vnd.github+json"}
     try:
-        with httpx.Client(timeout=30) as c:
-            r = c.get(api, headers=headers)
-            sha = r.json().get("sha") if r.status_code == 200 else None
-            body = json.dumps({"filtros": CURRENT}, ensure_ascii=False, indent=2)
-            data = {
-                "message": "chore: actualizar filtros desde el bot [skip ci]",
-                "content": base64.b64encode(body.encode()).decode(),
-                "branch": "main",
-            }
-            if sha:
-                data["sha"] = sha
-            r = c.put(api, headers=headers, json=data)
-            return r.status_code in (200, 201)
+        r = _http.get(api, headers=headers)
+        sha = r.json().get("sha") if r.status_code == 200 else None
+        body = json.dumps({"filtros": CURRENT}, ensure_ascii=False, indent=2)
+        data = {
+            "message": "chore: actualizar filtros desde el bot [skip ci]",
+            "content": base64.b64encode(body.encode()).decode(),
+            "branch": "main",
+        }
+        if sha:
+            data["sha"] = sha
+        r = _http.put(api, headers=headers, json=data)
+        return r.status_code in (200, 201)
     except Exception as e:  # noqa: BLE001
         print(f"[bot] error guardando en GitHub: {e}")
         return False
@@ -130,13 +135,11 @@ def _norm(s: str) -> str:
 
 # --------------------------- Lógica de comandos -------------------------
 def aplicar_y_guardar(chat_id, resumen: str):
-    ok = guardar_filtros()
-    estado = estado_text()
-    if ok:
-        send(chat_id, f"✅ {resumen}\n\n{estado}\n\nLo vas a ver en la próxima corrida.")
-    else:
-        send(chat_id, f"⚠️ {resumen}, pero no pude guardarlo en GitHub "
-                      f"(revisá GITHUB_TOKEN/REPO).\n\n{estado}")
+    # Confirmamos primero (rápido) y guardamos después; solo avisamos si falla.
+    send(chat_id, f"✅ {resumen}\n\n{estado_text()}\n\nLo vas a ver en la próxima corrida.")
+    if not guardar_filtros():
+        send(chat_id, "⚠️ Ojo: no pude guardar el cambio en GitHub "
+                      "(revisá GITHUB_TOKEN/REPO). Reintentá en un rato.")
 
 
 def handle(update: dict) -> None:
