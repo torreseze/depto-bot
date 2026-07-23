@@ -1,10 +1,11 @@
 name: depto-bot
 
 on:
-  schedule:
-    # GitHub Actions usa UTC. Córdoba es UTC-3.
-    # 6h–22h AR  ==  9h–23h + 0h,1h UTC  -> una corrida por hora.
-    - cron: "0 9-23,0,1 * * *"
+  # PAUSADO (2026-07: ya encontraron depto). Para reactivar, descomentá el schedule.
+  # schedule:
+  #   # GitHub Actions usa UTC. Córdoba es UTC-3.
+  #   # 6h–22h AR  ==  9h–23h + 0h,1h UTC  -> una corrida por hora.
+  #   - cron: "0 9-23,0,1 * * *"
   workflow_dispatch: {}   # permite correrlo a mano desde la pestaña Actions
 
 # Necesario para commitear el estado (state.json) de vuelta al repo.
